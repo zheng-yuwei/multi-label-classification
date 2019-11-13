@@ -43,8 +43,8 @@ class MyLoss(object):
         """ 返回多分类 focal loss 函数
         Formula: loss = -alpha*((1-p_t)^gamma)*log(p_t)
         Parameters:
-            alpha -- the same as wighting factor in balanced cross entropy, default 2.0
-            gamma -- focusing parameter for modulating factor (1-p), default 0.25
+            alpha -- the same as wighting factor in balanced cross entropy, default 0.25
+            gamma -- focusing parameter for modulating factor (1-p), default 2.0
         """
         def focal_loss(y_truth, y_pred, _):
             epsilon = keras.backend.epsilon()
