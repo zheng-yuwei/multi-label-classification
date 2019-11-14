@@ -113,7 +113,7 @@ mixnet18训练时间大大上升，推理时间也长了，泛化效果比resnex
 [10] Rethinking the Value of Network Pruning
 
 ## TODO
-1. self-balance；
+1. 解决类别不平衡的做法：对reweighted sample从而实现self-balance（参考sklearn），先用训练一个网络然后采样平衡数据集做finetune；
 1. 使用GAN生成数据，进行数据增强；
 1. Handwriting Recognition in Low-resource Scripts Using Adversarial Learning。
 
