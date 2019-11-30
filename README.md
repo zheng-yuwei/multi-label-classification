@@ -1,7 +1,5 @@
 # multi-label-classification
 
-By 郑煜伟
-
 基于tf.keras，实现多标签分类CNN模型。
 
 ## 如何使用
@@ -86,21 +84,6 @@ TIPS：其他试过但基本无效的手段包括：
 继续加大weight decay权重，BN层的gamma不加weight decay，BN层的beta加weight decay，
 全连接层加dropout，focal loss，从Adam训练改为SGDM，加warmup。
 
-本人数据集上，比较好的方案是：
-**[0.00001, 0.001, 0.0001, 0.00001, 0.000001]的warmup RAdam +
-conv层（去bias，影响会被BN层消除，并且实验后的确也比较好） 5e-4的weight decay +
-BN层 lambda 1e-3的slim +
-whiting + augment +
-[30bins, 0.75LWMA] label-wise的ghm +
-resnet18(最后一个block为384而非512，这个并没有实验过，随手设置小一点而已；
-resnet18v2效果并没有变好，反而训练时间上升；
-resnext18泛化效果会好一些，但是训练时间上升好多，
-推理时间好像没有少；
-mixnet18训练时间大大上升，推理时间也长了，泛化效果比resnext好。
-[resnet 2个V100一个epoch 80s左右，resnext18 8个V100一个epoch 170s，mixnet18 8个V100一个epoch 300s；
-所以为了调参和迭代，还是选择resnet18比较好]
-）**
-
 [1] L2 Regularization versus Batch and Weight Normalization  
 [2] Towards Understanding Regularization in Batch Normalization  
 [3] Learning Efficient Convolutional Networks through Network Slimming  
@@ -113,7 +96,9 @@ mixnet18训练时间大大上升，推理时间也长了，泛化效果比resnex
 [10] Rethinking the Value of Network Pruning
 
 ## TODO
-1. 解决类别不平衡的做法：对reweighted sample从而实现self-balance（参考sklearn），先用训练一个网络然后采样平衡数据集做finetune；
+1. 解决类别不平衡的做法：
+    - reweighted sample从而实现self-balance（参考sklearn）；
+    - 先用训练一个网络然后采样平衡数据集做finetune。
 1. 使用GAN生成数据，进行数据增强；
 1. Handwriting Recognition in Low-resource Scripts Using Adversarial Learning。
 
