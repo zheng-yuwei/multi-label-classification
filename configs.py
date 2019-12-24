@@ -34,7 +34,7 @@ FLAGS.output_names = ['class_{}'.format(i+1) for i in range(10)]
 FLAGS.loss_weights = [1, 1, 1, 1, 1, 1, 1, 1, 0.5, 0.5]
 FLAGS.mode = 'train'  # train, test, debug, save_pb, save_serving
 FLAGS.model_backbone = Classifier.BACKBONE_RESNET_18
-FLAGS.optimizer = 'radam'  # sgdm, adam, adabound, radam
+FLAGS.optimizer = 'adam'  # sgdm, adam, radam(tf2暂且不可用)
 FLAGS.is_augment = True
 FLAGS.is_label_smoothing = False
 FLAGS.is_focal_loss = False
@@ -61,7 +61,7 @@ FLAGS.stop_min_delta = 0.0001
 FLAGS.lr_func = lr_func  # 学习率更新函数
 # FLAGS.logger_batch = 20  # 打印训练学习的batch间隔
 # tensorboard日志保存目录
-FLAGS.tensorboard_dir = 'logs/' + 'lpr-{}-{}'.format(FLAGS.type, datetime.datetime.now().strftime('%Y%m%d-%H%M%S'))
+FLAGS.tensorboard_dir = 'logs\\' + 'lpr-{}-{}'.format(FLAGS.type, datetime.datetime.now().strftime('%Y%m%d-%H%M%S'))
 # 模型保存
 FLAGS.checkpoint_path = 'models/{}/'.format(FLAGS.type)
 FLAGS.checkpoint_name = 'lp-recognition-{}'.format(FLAGS.type) + '-{epoch: 3d}-{loss: .5f}.ckpt'

@@ -6,13 +6,14 @@ File trainer.py
 import os
 import logging
 import tensorflow as tf
-from tensorflow import saved_model
+from tensorflow.compat.v1 import saved_model, graph_util
+from tensorflow.python.keras import backend as K
 from tensorflow import keras
 
 from configs import FLAGS
 from dataset.file_util import FileUtil
 from multi_label.multi_label_model import Classifier
-from multi_label.multi_label_loss import MyLoss
+from multi_label.multi_label_loss import MyCategoricalLoss
 
 
 class MultiLabelClassifier(object):
@@ -78,23 +79,20 @@ class MultiLabelClassifier(object):
         # 设置模型优化方法
         self.loss_function = list()
         for _ in self.output_shapes:
-            loss_function = MyLoss(self.model,
-                                   is_label_smoothing=FLAGS.is_label_smoothing,
-                                   is_focal_loss=FLAGS.is_focal_loss,
-                                   is_gradient_harmonized=FLAGS.is_gradient_harmonized).categorical_crossentropy
+            loss_function = MyCategoricalLoss(model=self.model,
+                                              is_label_smoothing=FLAGS.is_label_smoothing,
+                                              is_focal_loss=FLAGS.is_focal_loss,
+                                              is_gradient_harmonized=FLAGS.is_gradient_harmonized)
             self.loss_function.append(loss_function)
 
         optimizer = keras.optimizers.SGD(lr=FLAGS.init_lr, momentum=0.95, nesterov=True)
         if FLAGS.optimizer == 'adam':
             optimizer = keras.optimizers.Adam(lr=FLAGS.init_lr, amsgrad=True)  # 用AMSGrad
-        elif FLAGS.optimizer == 'adabound':
-            from keras_adabound import AdaBound
-            optimizer = AdaBound(lr=1e-3, final_lr=0.1)
         elif FLAGS.optimizer == 'radam':
             from utils.radam import RAdam
             optimizer = RAdam(lr=1e-3)
 
-        # 由于是多标签分类损失，最终答应的损失信息为：
+        # 由于是多标签分类损失，最终大概的损失信息为：
         # loss: 44.6420 - class_1_loss: 7.8428 - class_2_loss: 5.8357 - class_3_loss: 4.5361 - class_4_loss: 4.7954
         # - class_5_loss: 4.1554 - class_6_loss: 4.6104 - class_7_loss: 5.5645 - class_8_loss: 0.6412
         # - class_9_loss: 0.7639 - class_10_loss: 4.1163
@@ -152,7 +150,7 @@ class MultiLabelClassifier(object):
         builder = saved_model.builder.SavedModelBuilder(FLAGS.serving_model_dir)
         signature = saved_model.signature_def_utils.predict_signature_def(inputs={'images': self.model.input},
                                                                           outputs=outputs)
-        with keras.backend.get_session() as sess:
+        with K.get_session() as sess:
             builder.add_meta_graph_and_variables(sess=sess,
                                                  tags=[saved_model.tag_constants.SERVING],
                                                  signature_def_map={'predict': signature})
@@ -174,14 +172,14 @@ class MultiLabelClassifier(object):
         model = keras.models.load_model(h5_path)
         model.summary()
         # 保存pb
-        with keras.backend.get_session() as sess:
+        with K.get_session() as sess:
             output_names = [out.op.name for out in model.outputs]
             input_graph_def = sess.graph.as_graph_def()
             for node in input_graph_def.node:
                 node.device = ""
-            graph = tf.graph_util.remove_training_nodes(input_graph_def)
-            graph_frozen = tf.graph_util.convert_variables_to_constants(sess, graph, output_names)
-            tf.train.write_graph(graph_frozen, FLAGS.pb_model_dir, '{}.pb'.format(model_name), as_text=False)
+            graph = graph_util.remove_training_nodes(input_graph_def)
+            graph_frozen = graph_util.convert_variables_to_constants(sess, graph, output_names)
+            tf.io.write_graph(graph_frozen, FLAGS.pb_model_dir, '{}.pb'.format(model_name), as_text=False)
         logging.info("pb模型保存成功！")
 
     def evaluate(self, test_set, steps):
@@ -215,8 +213,8 @@ class MultiLabelClassifier(object):
             y_preds = self.model(images)
             y_truths = labels
             loss = 0
-            for y_truth, y_pred in zip(y_truths, y_preds):
-                loss += self.loss_function(y_truth, y_pred)
+            for i, (y_truth, y_pred) in enumerate(zip(y_truths, y_preds)):
+                loss += self.loss_function[i](y_truth, y_pred)
             loss = tf.reduce_mean(loss)
         gradients = tape.gradient(loss, self.model.trainable_weights)
         gradients = [{weight.name: gradient} for gradient, weight in zip(gradients, self.model.trainable_weights)]

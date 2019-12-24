@@ -31,7 +31,7 @@ class DatasetUtil(object):
     @staticmethod
     def _add_gauss_noise(image):
         """ 加入高斯噪声 """
-        image = image + tf.cast(tf.random_normal(tf.shape(image), mean=0, stddev=DatasetUtil._random_normal),
+        image = image + tf.cast(tf.random.normal(tf.shape(image), mean=0, stddev=DatasetUtil._random_normal),
                                 tf.float32)
         return image
 
@@ -48,7 +48,7 @@ class DatasetUtil(object):
     def _add_noise(image):
         """ 对图片进行数据增强：高斯噪声或椒盐噪声 """
         # 噪声类型
-        noise_type = tf.random_uniform([], minval=0, maxval=3, dtype=tf.int32)
+        noise_type = tf.random.uniform([], minval=0, maxval=3, dtype=tf.int32)
         image = tf.case(pred_fn_pairs=[(tf.equal(noise_type, 0),
                                         lambda: DatasetUtil._add_salt_pepper_noise(image)),
                                        (tf.equal(noise_type, 1),
@@ -94,7 +94,7 @@ class DatasetUtil(object):
         """
         image = DatasetUtil._add_noise(image)
         # 数据增强顺序
-        color_ordering = tf.random_uniform([], minval=0, maxval=4, dtype=tf.int32)
+        color_ordering = tf.random.uniform([], minval=0, maxval=4, dtype=tf.int32)
         image = tf.case(pred_fn_pairs=[(tf.equal(color_ordering, 0),
                                         lambda: DatasetUtil._augment_cond_0(image)),
                                        (tf.equal(color_ordering, 1),

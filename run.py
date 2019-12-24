@@ -14,14 +14,15 @@ from logging.handlers import RotatingFileHandler
 from multi_label.trainer import MultiLabelClassifier
 from configs import FLAGS
 
-if FLAGS.mode == 'test':
-    tf.enable_eager_execution()
+if FLAGS.mode in ('train', 'save_pb', 'save_serving'):
+    tf.compat.v1.disable_eager_execution()
+
 if FLAGS.mode in ('train', 'debug'):
     keras.backend.set_learning_phase(True)
 else:
     keras.backend.set_learning_phase(False)
 np.random.seed(6)
-tf.set_random_seed(800)
+tf.random.set_seed(800)
 
 
 def generate_logger(filename, **log_params):
@@ -51,10 +52,8 @@ def run():
     # gpu模式
     if FLAGS.gpu_mode != MultiLabelClassifier.CPU_MODE:
         os.environ["CUDA_VISIBLE_DEVICES"] = FLAGS.visible_gpu
-        # tf.device('/gpu:{}'.format(FLAGS.gpu_device))
-        config = tf.ConfigProto()
-        config.gpu_options.allow_growth = True  # 按需
-        sess = tf.Session(config=config)
+        for device in tf.config.experimental.list_physical_devices('GPU'):
+            tf.config.experimental.set_memory_growth(device, True)
 
         """
         # 添加debug：nan或inf过滤器
@@ -96,11 +95,11 @@ def run():
         sess.add_tensor_filter("has_nan", has_nan)
         sess.add_tensor_filter("has_inf", has_inf)
         sess.add_tensor_filter("has_inf_or_nan", tf_debug.has_inf_or_nan)
-        """
         keras.backend.set_session(sess)
+        """
 
     generate_logger(filename=FLAGS.log_path)
-    logging.info('TensorFlow version: %s', tf.__version__)  # 1.13.1
+    logging.info('TensorFlow version: %s', tf.__version__)  # 2.0.0
     logging.info('Keras version: %s', keras.__version__)  # 2.2.4-tf
 
     classifier = MultiLabelClassifier()

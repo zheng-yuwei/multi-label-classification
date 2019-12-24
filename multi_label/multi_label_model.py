@@ -57,10 +57,10 @@ class Classifier(object):
         return outputs
 
     @classmethod
-    def build(cls, backbone, input_shape, output_shape, output_names):
+    def build(cls, backbone_name, input_shape, output_shape, output_names):
         """
         构建backbone基础网络的多标签分类keras.models.Model对象
-        :param backbone: 基础网络，枚举变量 Classifier.NetType
+        :param backbone_name: 基础网络，枚举变量 Classifier.NetType
         :param input_shape: 输入尺寸
         :param output_shape: 多标签输出的每个分支的类别数列表
         :param output_names: 多标签输出的每个分支的名字
@@ -69,19 +69,19 @@ class Classifier(object):
         if len(input_shape) != 3:
             raise Exception('模型输入形状必须是3维形式')
 
-        if backbone in cls.BACKBONE_TYPE.keys():
-            backbone = cls.BACKBONE_TYPE[backbone]
+        if backbone_name in cls.BACKBONE_TYPE.keys():
+            backbone = cls.BACKBONE_TYPE[backbone_name]
         else:
             raise ValueError("没有该类型的基础网络！")
         
         if len(input_shape) != 3:
             raise Exception('模型输入形状必须是3维形式')
 
-        logging.info('构造多标签分类模型，基础网络：%s', backbone)
+        logging.info('构造多标签分类模型，基础网络：%s', backbone_name)
         input_x = keras.layers.Input(shape=input_shape)
         backbone_model = backbone.build(input_x)
         outputs = Classifier._multi_label_head(backbone_model, output_shape, output_names)
-        model = keras.models.Model(inputs=input_x, outputs=outputs, name=backbone)
+        model = keras.models.Model(inputs=input_x, outputs=outputs, name=backbone_name)
         return model
 
 

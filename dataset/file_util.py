@@ -26,9 +26,10 @@ class FileUtil(object):
         :param root_path: 图片根目录
         :return: DatasetV1Adapter<(图片路径Tensor(shape=(), dtype=string)，标签Tensor(shape=(?,), dtype=float32))>
         """
-        strings = tf.string_split([string_line], delimiter=' ').values
-        image_path = tf.string_join([root_path, strings[0]], separator=os.sep)
-        labels = tf.string_to_number(strings[1:])
+
+        strings = tf.strings.split([string_line], sep=' ').values
+        image_path = tf.strings.join([root_path, strings[0]], separator=os.sep)
+        labels = tf.strings.to_number(strings[1:])
         return image_path, labels
     
     @staticmethod
@@ -41,9 +42,9 @@ class FileUtil(object):
         :return: 归一化的图片 Tensor(shape=(48, 144, ?), dtype=float32)
         """
         # 图片
-        image = tf.read_file(image_path)
+        image = tf.io.read_file(image_path)
         image = tf.image.decode_jpeg(image)
-        image = tf.image.resize_images(image, image_size, method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+        image = tf.image.resize(image, image_size, method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
         # 这里使用tf.float32会将照片归一化，也就是 *1/255
         image = tf.image.convert_image_dtype(image, dtype=tf.float32)
         image = tf.reverse(image, axis=[2])  # 读取的是rgb，需要转为bgr
@@ -119,7 +120,6 @@ if __name__ == '__main__':
     import time
     
     # 开启eager模式进行图片读取、增强和展示
-    tf.enable_eager_execution()
     train_file_path = './test_sample/label.txt'  # 标签文件
     image_root_path = './test_sample'  # 图片根目录
     
