@@ -94,7 +94,7 @@ class FileUtil(object):
             logging.info('2.1 image set数据增强；')
             image_set = DatasetUtil.augment_image(image_set)
 
-        logging.info('3. image set数据白化；')
+        logging.info('3. image set数据标准化；')
         image_set = image_set.map(lambda image: tf.image.per_image_standardization(image),
                                   num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
